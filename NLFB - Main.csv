@@ -1,0 +1,40 @@
+Number,ISBN,Month,Year,Title,Score,Publisher,Pages,Author,Pub year,Goodreads score,Our score conversion,variance,Debut?,Translated?
+1,,November,2021,Beautiful world,6.74,Faber & Faber,352,Female,2021,3.55,3.37,-0.18,no,no
+2,,December,2021,Ariadne,6.4,Headline Publishing Group,400,Female,2021,3.82,3.2,-0.62,yes,no
+3,,January,2022,Small pleasures,6.83,Orion Publishing Co,368,Female,2020,3.8,3.415,-0.385,no,no
+4,,March,2022,Acts of desperation,6.66,Vintage Publishing,288,Female,2021,3.77,3.33,-0.44,yes,no
+5,,March,2022,Love marriage,6.41,"Little, Brown Book Group",512,Female,2022,3.94,3.205,-0.735,no,no
+6,,April,2022,Once there were wolves,7.34,Vintage Publishing,288,Female,2021,4.12,3.67,-0.45,no,no
+7,,May,2022,Luster,5.8,Pan Macmillan,240,Female,2020,3.54,2.9,-0.64,yes,no
+8,,May,2022,Crawdads,6.9,"Little, Brown Book Group",384,Female,2018,4.4,3.45,-0.95,yes,no
+9,,June,2022,Bewilderment,6.81,Vintage Publishing,336,Male,2021,3.93,3.405,-0.525,no,no
+10,,July,2022,The Book of form and Emptiness,6.77,Canongate Books,560,Female,2021,4.05,3.385,-0.665,no,no
+11,,August,2022,Lessons in Chemistry,7.32,Transworld Publishers Ltd,400,Female,2022,4.33,3.66,-0.67,yes,no
+12,,September,2022,Assembly,6.11,Penguin Books Ltd,112,Female,2021,3.89,3.055,-0.835,yes,no
+13,,October,2022,Sharp objects,6.82,Orion Publishing Co,336,Female,2006,4.01,3.41,-0.6,yes,no
+14,,November,2022,Tomorrow x3,7.84,Vintage Publishing,496,Female,2022,4.22,3.92,-0.3,no,no
+15,,December,2022,Hotel du lac,6.1,Penguin Books Ltd,192,Female,1984,3.6,3.05,-0.55,no,no
+16,,January,2023,A Man Called Ove,6.4,Hodder & Stoughton,320,Male,2014,4.38,3.2,-1.18,no,yes
+17,,February,2023,Rabbit Hutch,6.23,Oneworld Publications,352,Female,2022,3.59,3.115,-0.475,yes,no
+18,,March,2023,A Little Life,7.41,Pan Macmillan,736,Female,2015,4.34,3.705,-0.635,no,no
+19,,April,2023,Heartburn,7,"Little, Brown Book Group",192,Female,1983,3.61,3.5,-0.11,no,no
+20,,May,2023,Cursed Bread,4.64,Penguin Books Ltd,240,Female,2023,3.33,2.32,-1.01,no,no
+21,,June,2023,Romantic Comedy,5.38,Transworld Publishers Ltd,400,Female,2023,3.73,2.69,-1.04,no,no
+22,,July,2023,Yellowface,7.66,HarperCollins Publishers,336,Female,2023,4.04,3.83,-0.21,no,no
+23,,August,2023,Other people's clothes,6.26,Hodder & Stoughton,320,Female,2021,3.71,3.13,-0.58,yes,no
+24,,September,2023,This is how it always is,6.22,Headline Publishing Group,480,Female,2017,4.28,3.11,-1.17,no,no
+25,,October,2023,Our Wives under the sea,6.63,,,,,,,,,
+26,,November,2023,The Humans,5.48,,,,,,,,,
+27,,December,2023,Good Material,7.09,,,,,,,,,
+28,,January,2024,The Rachel Incident,7.04,,,,,,,,,
+30,,February,2024,I who have never known men,7.51,,,,,,,,,
+31,,March,2024,Pachinko,7.7,,,,,,,,,
+32,,April,2024,One of the Good Guys,4.63,,,,,,,,,
+33,,May,2024,Until August,5.65,,,,,,,,,
+34,,June,2024,Demon Copperhead,8.192,,,,,,,,,
+35,,July,2024,You are here,6.09,,,,,,,,,
+36,,August,2024,Butter,,,,,,,,,,
+37,,September,2024,The Ministry of Time,,,,,,,,,,
+38,,October,2024,,,,,,,,,,,
+39,,November,2024,,,,,,,,,,,
+40,,December,2024,,,,,,,,,,,
