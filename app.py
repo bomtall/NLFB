@@ -1,9 +1,11 @@
 import streamlit as st
+import requests
 import pandas as pd
 import polars as pl
 #import googlesheets
 import chart_functions as chart
 from streamlit_gsheets import GSheetsConnection
+from lxml.html import fromstring
 
 # command to run: streamlit run app.py
 
@@ -11,7 +13,8 @@ st.set_page_config(
     page_title="North London's Friendly Bookclub",
     page_icon="📚",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
+
 )
 
 worksheet_names = ["Main", "Publishers", "Authors"]
@@ -30,6 +33,17 @@ df = pl.from_pandas(df)
 def pad_data(data, max_length):
     padded_data = [row + [None] * (max_length - len(row)) for row in data]
     return padded_data
+meetup_url = "https://www.meetup.com/20-and-30-somethings-book-club-london/"
+
+
+def get_number_of_members():
+    
+    response = requests.get(meetup_url)
+
+    soup = fromstring(response.text)
+    element = soup.get_element_by_id("member-count-link")
+    text = str(element.text_content())
+    return text.split(" · ")[0]
 
 
 # main_table = googlesheets.main(SPREADSHEET_ID, MAIN_RANGE)
@@ -77,3 +91,7 @@ with col[1]:
     
     scatter2 = chart.make_scatter(df_selected_year, 'Score', 'Goodreads score')
     st.plotly_chart(scatter2, use_container_width=True )
+
+with col[0]:
+    st.write(f"This is a dashboard presenting some data on books chosen to read, and subsquently discussed and scored by North London's Friendly Bookclub which has {get_number_of_members()}")
+    st.link_button(label="Meetup", url=meetup_url)
