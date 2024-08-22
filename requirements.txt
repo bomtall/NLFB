@@ -81,7 +81,7 @@ pyparsing==3.1.2
 PySocks 
 python-dateutil 
 pytz 
-pywin32==306
+# pywin32==306
 PyYAML 
 pyzmq 
 referencing 
