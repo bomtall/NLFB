@@ -77,7 +77,7 @@ with st.sidebar:
     year_list = list(df['Year'].unique().sort())
     selected_year = st.selectbox('Select a year', year_list, index=len(year_list)-1)
     df_selected_year = df.filter(pl.col('Year') == selected_year)
-    print(df_selected_year)
+    # print(df_selected_year)
 
 col = st.columns((1.5, 4.5, 2), gap='medium')
 
