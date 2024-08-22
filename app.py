@@ -26,12 +26,14 @@ df = pl.DataFrame(main_table[1:], schema=main_headers, orient='row')
 df = df.with_columns(
     pl.col('Score').map_elements(lambda x: None if x == "" else x).alias('Score'),
     pl.col('Pages').map_elements(lambda x: None if x == "" else x).alias('Pages'),
+    pl.col('Goodreads score').map_elements(lambda x: None if x == "" else x).alias('Goodreads score'),
 )
 
 df = df.with_columns(
 
     pl.col('Score').cast(pl.Float64),
-    pl.col('Pages').cast(pl.Int64)
+    pl.col('Pages').cast(pl.Int64),
+    pl.col('Goodreads score').cast(pl.Float64)
 )
 print(df)
 
@@ -60,3 +62,5 @@ with col[1]:
     scatter = chart.make_scatter(df_selected_year, 'Score', 'Pages')
     st.plotly_chart(scatter, use_container_width=True )
     
+    scatter2 = chart.make_scatter(df_selected_year, 'Score', 'Goodreads score')
+    st.plotly_chart(scatter2, use_container_width=True )
