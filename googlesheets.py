@@ -9,12 +9,7 @@ from googleapiclient.errors import HttpError
 # If modifying these scopes, delete the file token.json.
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
 
-# The ID and range of a sample spreadsheet.
-SAMPLE_SPREADSHEET_ID = "1nH-HwVMPfHKVwY5ybbiYZjAU7uXrTPxenIJ5raxWrWU"
-SAMPLE_RANGE_NAME = "Main!A1:O"
-
-
-def main():
+def main(spreadsheet_id, range):
     """Shows basic usage of the Sheets API.
     Prints values from a sample spreadsheet.
     """
@@ -44,7 +39,7 @@ def main():
         sheet = service.spreadsheets()
         result = (
             sheet.values()
-            .get(spreadsheetId=SAMPLE_SPREADSHEET_ID, range=SAMPLE_RANGE_NAME)
+            .get(spreadsheetId=spreadsheet_id, range=range)
             .execute()
         )
         values = result.get("values", [])
