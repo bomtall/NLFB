@@ -22,7 +22,7 @@ print(df)
 
 
 st.set_page_config(
-    page_title="North London's Friendly Bookclub 📚",
+    page_title="North London's Friendly Bookclub",
     page_icon="📚",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -38,7 +38,7 @@ with st.sidebar:
 col = st.columns((1.5, 4.5, 2), gap='medium')
 
 with col[1]:
-    st.markdown('#### Total Score by Publisher')
+    st.markdown('#### Total Score by Publisher 📚')
     bar = chart.make_bar(df_selected_year, 'Publisher', 'Score')
     st.plotly_chart(bar, use_container_width=True)
     
