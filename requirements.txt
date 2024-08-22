@@ -47,6 +47,7 @@ jsonschema-specifications
 jupyter_client 
 jupyter_core 
 jupyterlab_widgets
+lxml
 markdown-it-py 
 MarkupSafe 
 matplotlib-inline 
