@@ -1,42 +1,11 @@
 import streamlit as st
 import pandas as pd
 import polars as pl
-import googlesheets
+#import googlesheets
 import chart_functions as chart
+from streamlit_gsheets import GSheetsConnection
 
 # command to run: streamlit run app.py
-
-SPREADSHEET_ID = "1nH-HwVMPfHKVwY5ybbiYZjAU7uXrTPxenIJ5raxWrWU"
-MAIN_RANGE = "Main!A1:P"
-AUTHORS_RANGE = "Authors!A1:D"
-PUBLISHERS_RANGE = "Publishers!A1:B"
-
-def pad_data(data, max_length):
-    padded_data = [row + [None] * (max_length - len(row)) for row in data]
-    return padded_data
-
-
-main_table = googlesheets.main(SPREADSHEET_ID, MAIN_RANGE)
-main_headers = main_table[0]
-main_table = pad_data(main_table, len(main_headers))
-
-
-df = pl.DataFrame(main_table[1:], schema=main_headers, orient='row')
-
-df = df.with_columns(
-    pl.col('Score').map_elements(lambda x: None if x == "" else x).alias('Score'),
-    pl.col('Pages').map_elements(lambda x: None if x == "" else x).alias('Pages'),
-    pl.col('Goodreads score').map_elements(lambda x: None if x == "" else x).alias('Goodreads score'),
-)
-
-df = df.with_columns(
-
-    pl.col('Score').cast(pl.Float64),
-    pl.col('Pages').cast(pl.Int64),
-    pl.col('Goodreads score').cast(pl.Float64)
-)
-print(df)
-
 
 st.set_page_config(
     page_title="North London's Friendly Bookclub",
@@ -44,6 +13,50 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+worksheet_names = ["Main", "Publishers", "Authors"]
+
+# Create a connection object.
+conn = st.connection("gsheets", type=GSheetsConnection)
+
+df = conn.read(worksheet="Main")
+df = pl.from_pandas(df)
+
+# SPREADSHEET_ID = "1nH-HwVMPfHKVwY5ybbiYZjAU7uXrTPxenIJ5raxWrWU"
+# MAIN_RANGE = "Main!A1:P"
+# AUTHORS_RANGE = "Authors!A1:D"
+# PUBLISHERS_RANGE = "Publishers!A1:B"
+
+def pad_data(data, max_length):
+    padded_data = [row + [None] * (max_length - len(row)) for row in data]
+    return padded_data
+
+
+# main_table = googlesheets.main(SPREADSHEET_ID, MAIN_RANGE)
+# main_headers = main_table[0]
+# main_table = pad_data(main_table, len(main_headers))
+
+
+# df = pl.DataFrame(main_table[1:], schema=main_headers, orient='row')
+
+# df = df.with_columns(
+#     pl.col('Score').map_elements(lambda x: None if x == "" else x).alias('Score'),
+#     pl.col('Pages').map_elements(lambda x: None if x == "" else x).alias('Pages'),
+#     pl.col('Goodreads score').map_elements(lambda x: None if x == "" else x).alias('Goodreads score'),
+    
+# )
+
+df = df.with_columns(
+
+    pl.col('Score').cast(pl.Float64),
+    pl.col('Pages').cast(pl.Int64),
+    pl.col('Goodreads score').cast(pl.Float64),
+    pl.col('Year').cast(pl.Int32)
+)
+print(df)
+
+
+
 
 with st.sidebar:
     st.title("North London's Friendly Bookclub")
