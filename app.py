@@ -61,16 +61,11 @@ def get_number_of_members():
 # )
 
 df = df.with_columns(
-
     pl.col('Score').cast(pl.Float64),
     pl.col('Pages').cast(pl.Int64),
     pl.col('Goodreads score').cast(pl.Float64),
     pl.col('Year').cast(pl.Int32)
 )
-print(df)
-
-
-
 
 with st.sidebar:
     st.title("North London's Friendly Bookclub")
