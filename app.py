@@ -10,7 +10,7 @@ from lxml.html import fromstring
 # command to run: streamlit run app.py
 
 st.set_page_config(
-    page_title="North London's Friendly Bookclub",
+    page_title="London's Friendly Bookclub",
     page_icon="📚",
     layout="wide",
     initial_sidebar_state="expanded",
