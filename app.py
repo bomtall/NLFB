@@ -58,11 +58,21 @@ def get_number_of_members():
 #     pl.col('Goodreads score').map_elements(lambda x: None if x == "" else x).alias('Goodreads score'),
 # )
 
+import calendar
+abbr_to_num = {name: num for num, name in enumerate(calendar.month_name) if num}
+
+
 df = df.with_columns(
     pl.col('Score').cast(pl.Float64),
     pl.col('Pages').cast(pl.Int64),
     pl.col('Goodreads score').cast(pl.Float64),
-    pl.col('Year').cast(pl.Int32)
+    pl.col('Year').cast(pl.Int32),
+    pl.col('Month').map_elements(lambda x: abbr_to_num[x]).alias("Month Num"),
+    
+)
+
+df = df.with_columns(
+    pl.date(pl.col('Year'), pl.col('Month Num'), 1).alias("Date")
 )
 
 with st.sidebar:
@@ -89,4 +99,7 @@ with col[1]:
 with col[0]:
     st.write(f"This is a dashboard presenting some data on books chosen to read, and subsquently discussed and scored by London's Friendly Bookclub which has {get_number_of_members()}")
     st.link_button(label="Meetup", url=meetup_url)
+
+with col[2]:
+    st.table(df_selected_year.sort("Date", descending=True).select(pl.col("Title"), pl.col("Month") + " " + pl.col("Year").cast(str)))
 
