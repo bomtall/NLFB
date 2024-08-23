@@ -96,6 +96,7 @@ six
 smmap 
 sql_metadata==2.12.0
 sqlparse==0.5.1
+statsmodels
 st-gsheets-connection==0.1.0
 stack-data 
 streamlit 
