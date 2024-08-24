@@ -113,5 +113,5 @@ with col[0]:
     st.link_button(label="Meetup", url=meetup_url)
 
 with col[2]:
-    st.table(df_selected_year.sort("Date", descending=True).select(pl.col("Title"), pl.col("Month") + " " + pl.col("Year").cast(str)))
+    st.table(df_selected_year.sort("Date", descending=True).select(pl.col("Title"), pl.col("Month") + " " + pl.col("Year").cast(str), pl.col("Score")))
 
