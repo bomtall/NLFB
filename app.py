@@ -75,6 +75,9 @@ df = df.with_columns(
     pl.date(pl.col('Year'), pl.col('Month Num'), 1).alias("Date")
 )
 
+df = df.filter(
+    ~pl.col("Title").is_null())
+
 with st.sidebar:
     st.title("London's Friendly Bookclub")
     year_list = list(df['Year'].unique().sort())
@@ -83,16 +86,25 @@ with st.sidebar:
     # df_selected_year = df.filter(pl.col('Year') == selected_year)
     df_selected_year = df.filter(pl.col('Year').is_in(multi_select_year))
     # print(df_selected_year)
+
+
 col = st.columns((1.5, 4.5, 2), gap='medium')
 
 with col[1]:
-    st.markdown('#### Total Score by Publisher 📚')
-    bar = chart.make_bar(df_selected_year, 'Publisher', 'Score')
+    st.markdown('#### Mean Score & Book Count by Publisher 📚')
+
+    grouped_selected_year = df_selected_year.group_by('Publisher').agg(pl.col("Score").mean(), pl.col("Title").count())
+
+    bar = chart.make_bar_group(grouped_selected_year, 'Publisher', 'Score', 'Title', 'Score', 'Book Count')
+
+    #bar = chart.make_bar(grouped_selected_year, 'Publisher', 'Score')
     st.plotly_chart(bar, use_container_width=True)
 
+    st.markdown('#### Score vs Number of Pages 📃')
     scatter = chart.make_scatter(df_selected_year, 'Score', 'Pages', trend=True)
     st.plotly_chart(scatter, use_container_width=True )
     
+    st.markdown('#### London Bookclub Score vs Goodreads')
     scatter2 = chart.make_scatter(df_selected_year, 'Score', 'Goodreads score', trend=True)
     st.plotly_chart(scatter2, use_container_width=True )
 
