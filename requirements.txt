@@ -55,7 +55,9 @@ mdurl
 narwhals 
 nbformat 
 nest_asyncio 
-numpy 
+millify
+numpy
+oauth2client
 oauthlib==3.2.2
 openpyxl 
 packaging 
