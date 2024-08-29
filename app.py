@@ -25,12 +25,26 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-creds = json.loads(str(toml.load('.streamlit/secrets.toml')['connections']['gsheets']).replace("'", '"').replace('\r\n', '\\r\\n'))
-worksheet_names = ["Main", "Publishers", "Authors"]
-scope = [
-    'https://www.googleapis.com/auth/spreadsheets',
-    'https://www.googleapis.com/auth/drive'
-]
+# scope = [
+#     'https://www.googleapis.com/auth/spreadsheets',
+#     'https://www.googleapis.com/auth/drive'
+# ]
+
+def load_secret(secret_path):
+    return toml.load(secret_path)
+
+def authenticate(secrets, scope):
+    credentials_file = json.loads(str(secrets['connections']['gsheets']).replace("'", '"').replace('\r\n', '\\r\\n'))
+    credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_file, scopes=scope)
+    client = gspread.authorize(credentials)
+    wb = client.open('NLFB')
+    return wb
+
+secrets = load_secret('.streamlit/secrets.toml')
+scope = secrets['scopes']['scope']
+WORKBOOK = authenticate(secrets, scope)
+
+
 
 
 conn = st.connection("gsheets", type=GSheetsConnection)
@@ -103,9 +117,7 @@ with col[1]:
 def add_suggestion():
     st.session_state['btn_suggest_disabled'] = True
     st.write("Thank you for your suggestion of " + st.session_state.input_text)
-    credentials = ServiceAccountCredentials.from_json_keyfile_dict(creds, scopes=scope)
-    client = gspread.authorize(credentials)
-    sh = client.open('NLFB').worksheet('Suggestions') 
+    sh = WORKBOOK.worksheet('Suggestions') 
     row = ['', st.session_state.input_text]
     sh.append_row(row)
     st.session_state.input_text = ""
