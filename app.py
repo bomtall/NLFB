@@ -1,21 +1,20 @@
-import streamlit as st
-import requests
+import toml
+import json
 import millify
+import gspread
+import requests
+import calendar
+import numpy as np
 import pandas as pd
 import polars as pl
 import datetime as dt
-import chart_functions as chart
-from streamlit_gsheets import GSheetsConnection
-from lxml.html import fromstring
+import streamlit as st
 from millify import prettify
-import calendar
-import numpy as np
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-import toml
-import json
+import chart_functions as chart
+from lxml.html import fromstring
+from streamlit_gsheets import GSheetsConnection
 from google.oauth2.service_account import Credentials
-
+from oauth2client.service_account import ServiceAccountCredentials
 
 # command to run: streamlit run app.py
 
@@ -26,20 +25,21 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-creds = json.loads(str(toml.load('.streamlit/secrets.toml')['jsonKeyFile']).replace("'", '"').replace('\r\n', '\\r\\n'))
+creds = json.loads(str(toml.load('.streamlit/secrets.toml')['connections']['gsheets']).replace("'", '"').replace('\r\n', '\\r\\n'))
 worksheet_names = ["Main", "Publishers", "Authors"]
 scope = [
     'https://www.googleapis.com/auth/spreadsheets',
     'https://www.googleapis.com/auth/drive'
 ]
 
-# Create a connection object.
+
 conn = st.connection("gsheets", type=GSheetsConnection)
+
 
 df = conn.read(worksheet="Main")
 df = pl.from_pandas(df)
 
-
+# TODO: get from resources page
 meetup_url = "https://www.meetup.com/20-and-30-somethings-book-club-london/"
 
 
@@ -52,23 +52,7 @@ def get_number_of_members():
     text = str(element.text_content())
     return text.split(" · ")[0]
 
-
-# main_table = googlesheets.main(SPREADSHEET_ID, MAIN_RANGE)
-# main_headers = main_table[0]
-# main_table = pad_data(main_table, len(main_headers))
-
-
-# df = pl.DataFrame(main_table[1:], schema=main_headers, orient='row')
-
-# df = df.with_columns(
-#     pl.col('Score').map_elements(lambda x: None if x == "" else x).alias('Score'),
-#     pl.col('Pages').map_elements(lambda x: None if x == "" else x).alias('Pages'),
-#     pl.col('Goodreads score').map_elements(lambda x: None if x == "" else x).alias('Goodreads score'),
-# )
-
-
 abbr_to_num = {name: num for num, name in enumerate(calendar.month_name) if num}
-
 
 df = df.with_columns(
     pl.col('Score').cast(pl.Float64),
@@ -76,7 +60,6 @@ df = df.with_columns(
     pl.col('Goodreads score').cast(pl.Float64),
     pl.col('Year').cast(pl.Int32),
     pl.col('Month').map_elements(lambda x: abbr_to_num[x]).alias("Month Num"),
-    
 )
 
 df = df.with_columns(
@@ -119,15 +102,13 @@ with col[1]:
 
 def add_suggestion():
     st.session_state['btn_suggest_disabled'] = True
-    st.write(st.session_state.input_text)
+    st.write("Thank you for your suggestion of " + st.session_state.input_text)
     credentials = ServiceAccountCredentials.from_json_keyfile_dict(creds, scopes=scope)
-    #credentials = ServiceAccountCredentials.service_account_from_dict(creds, scopes=scope)
-    #credentials = Credentials.from_service_account_file('credentials.json', scopes=scope)
-
     client = gspread.authorize(credentials)
     sh = client.open('NLFB').worksheet('Suggestions') 
     row = ['', st.session_state.input_text]
     sh.append_row(row)
+    st.session_state.input_text = ""
 
 
 with col[0]:
@@ -170,9 +151,6 @@ with col[0]:
         disabled=st.session_state['btn_suggest_disabled'],
         use_container_width=False
     )
-
-
-    
 
 with col[2]:
     st.text_input("Search selected titles...")
