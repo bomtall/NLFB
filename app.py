@@ -28,24 +28,26 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-def load_environment_variables(secret_path):
-    return toml.load(secret_path)
+page_columns = st.columns((1.5, 4.5, 2), gap='medium')
 
-def authenticate(secrets, scope, workbook_name):
-    credentials_file = json.loads(str(environment['connections']['gsheets']).replace("'", '"').replace('\r\n', '\\r\\n'))
+def authenticate(connection_values: dict, scope: list, workbook_name: str):
+    credentials_file = json.loads(str(connection_values).replace("'", '"').replace('\r\n', '\\r\\n'))
     credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_file, scopes=scope)
     client = gspread.authorize(credentials)
     wb = client.open(workbook_name)
     return wb
 
-def pad_data(data, length):
-    padded_data = [[None if x == "" else x for x in row] + [None] * (length - len(row)) for row in data]
+def pad_data(data: list, length: int):
+    padded_data = [
+        [None if x == "" else x for x in row] +
+        [None] * (length - len(row)) for row in data
+    ]
     # for i in range(len(data)):
         # data[i] = [None if x == "" else x for x in data[i]]
         # data[i] = [row + [None] * (length - len(row)) for row in data]
     return padded_data
 
-def load_data(sheet_name, schema):
+def load_data(sheet_name: str, schema: dict) -> pl.DataFrame:
     sheet = WORKBOOK.worksheet(sheet_name)
     data = sheet.get()
     headers = data[0]
@@ -53,56 +55,49 @@ def load_data(sheet_name, schema):
     loaded_dataframe = pl.DataFrame(padded_data, schema=schema, orient='row', strict=False)
     return loaded_dataframe
 
-environment = load_environment_variables('.streamlit/secrets.toml')
-scope = environment['scopes']['scope']
-WORKBOOK = authenticate(environment, scope, 'NLFB')
+ENV = toml.load('.streamlit/secrets.toml')
+WORKBOOK = authenticate(
+    ENV['connections']['gsheets'],
+    ENV['scopes']['scope'], 
+    'NLFB'
+)
+main_df = load_data('Main', schema=schemas.main_schema)
+
+month_num_from_name_dict = {name:num for num, name in enumerate(calendar.month_name) if num}
+
+main_df = (
+    main_df
+    .with_columns(pl.col('Month').replace_strict(month_num_from_name_dict).alias("Month Num"))
+    .with_columns(pl.date(pl.col('Year'), pl.col('Month Num'), 1).alias("Date"))
+    .filter(~pl.col("Title").is_null())
+)
+
+resources_data = load_data('Resources', schema=schemas.resources_schema)
+meetup_url = resources_data.filter(pl.col('Resource') == 'Meetup Page')['URL'][0]
 
 
-# conn = st.connection("gsheets", type=GSheetsConnection)
-# df = conn.read(worksheet="Main")
-# df = pl.from_pandas(df)
-
-df = load_data('Main', schema=schemas.main_schema)
-
-
-
-# TODO: get from resources page
-meetup_url = "https://www.meetup.com/20-and-30-somethings-book-club-london/"
-
-# resources_data = load_data('Resources', schema=schemas.resources_schema)
-# meetup_url = resources_data[resources_data['Resource'] == 'Meetup Page']
-
-
-def get_number_of_members():
+def get_number_of_members() -> str:
     response = requests.get(meetup_url)
     soup = fromstring(response.text)
     element = soup.get_element_by_id("member-count-link")
     text = str(element.text_content())
     return text.split(" · ")[0]
 
-month_name_from_num_dict = dict(enumerate(calendar.month_name)).pop(0)
-
-df = (
-    df
-    .with_columns(pl.col('Month').replace_strict(month_name_from_num_dict).alias("Month Num"))
-    .with_columns(pl.date(pl.col('Year'), pl.col('Month Num'), 1).alias("Date"))
-    .filter(~pl.col("Title").is_null())
-)
 
 with st.sidebar:
     st.title("London's Friendly Bookclub")
     st.write(f"This is a dashboard presenting some data on books chosen to read, and subsquently discussed and scored by London's Friendly Bookclub which has {get_number_of_members()}")
     
-    year_list = list(df['Year'].unique().sort())
+    year_list = list(main_df['Year'].unique().sort())
     multi_select_year = st.multiselect('Select Year(s)', year_list)
-    df_selected_year = df.filter(pl.col('Year').is_in(multi_select_year))
+    df_selected_year = main_df.filter(pl.col('Year').is_in(multi_select_year))
 
     st.link_button(label="Meetup", url=meetup_url)
 
 
-col = st.columns((1.5, 4.5, 2), gap='medium')
 
-with col[1]:
+
+with page_columns[1]:
     st.markdown('#### Mean Score & Book Count by Publisher 📚')
 
     grouped_selected_year = df_selected_year.group_by('Publisher').agg(pl.col("Score").mean(), pl.col("Title").count())
@@ -129,27 +124,27 @@ def add_suggestion():
     st.session_state.input_text = ""
 
 
-with col[0]:
+with page_columns[0]:
     
     st.metric(
         label="Total pages read",
-        value=prettify(df['Pages'].sum()),
-        delta=df.filter(pl.col('Date') > (dt.date.today() - dt.timedelta(days=28)))['Pages'].sum(), 
+        value=prettify(main_df['Pages'].sum()),
+        delta=main_df.filter(pl.col('Date') > (dt.date.today() - dt.timedelta(days=28)))['Pages'].sum(), 
         # delta_color="inverse"
     )
     st.metric(
         label = "Total books read",
-        value=df['Title'].count(),
+        value=main_df['Title'].count(),
         delta=0
     )
     st.metric(
         label = "Total Authors",
-        value=df['Author'].n_unique(),
+        value=main_df['Author'].n_unique(),
         delta=0
     )
     st.metric(
         label = "Total Publishers",
-        value=df['Publisher'].n_unique(),
+        value=main_df['Publisher'].n_unique(),
         delta=0
     )
     # st.metric(
@@ -170,7 +165,13 @@ with col[0]:
         use_container_width=False
     )
 
-with col[2]:
-    st.text_input("Search selected titles...")
-    st.table(df_selected_year.sort("Date", descending=True).select(pl.col("Title"), pl.col("Month") + " " + pl.col("Year").cast(str), pl.col("Score")))
+with page_columns[2]:
+    st.dataframe(
+        df_selected_year.sort("Date", descending=True).select(pl.col("Title"), pl.col('Date'), pl.col("Score")),
+        column_config = {
+            'Date': st.column_config.DateColumn(format="YYYY-MM")
+        },
+        hide_index=True,
+        use_container_width=True
+    )
 
