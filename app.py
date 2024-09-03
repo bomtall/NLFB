@@ -10,11 +10,14 @@ import polars as pl
 import datetime as dt
 import streamlit as st
 from millify import prettify
-import chart_functions as chart
 from lxml.html import fromstring
 from streamlit_gsheets import GSheetsConnection
 from google.oauth2.service_account import Credentials
 from oauth2client.service_account import ServiceAccountCredentials
+
+# python files
+import schemas
+import chart_functions as chart
 
 # command to run: streamlit run app.py
 
@@ -25,63 +28,66 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# scope = [
-#     'https://www.googleapis.com/auth/spreadsheets',
-#     'https://www.googleapis.com/auth/drive'
-# ]
-
-def load_secret(secret_path):
+def load_environment_variables(secret_path):
     return toml.load(secret_path)
 
-def authenticate(secrets, scope):
-    credentials_file = json.loads(str(secrets['connections']['gsheets']).replace("'", '"').replace('\r\n', '\\r\\n'))
+def authenticate(secrets, scope, workbook_name):
+    credentials_file = json.loads(str(environment['connections']['gsheets']).replace("'", '"').replace('\r\n', '\\r\\n'))
     credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_file, scopes=scope)
     client = gspread.authorize(credentials)
-    wb = client.open('NLFB')
+    wb = client.open(workbook_name)
     return wb
 
-secrets = load_secret('.streamlit/secrets.toml')
-scope = secrets['scopes']['scope']
-WORKBOOK = authenticate(secrets, scope)
+def pad_data(data, length):
+    padded_data = [[None if x == "" else x for x in row] + [None] * (length - len(row)) for row in data]
+    # for i in range(len(data)):
+        # data[i] = [None if x == "" else x for x in data[i]]
+        # data[i] = [row + [None] * (length - len(row)) for row in data]
+    return padded_data
+
+def load_data(sheet_name, schema):
+    sheet = WORKBOOK.worksheet(sheet_name)
+    data = sheet.get()
+    headers = data[0]
+    padded_data = pad_data(data[1:], len(headers))
+    loaded_dataframe = pl.DataFrame(padded_data, schema=schema, orient='row', strict=False)
+    return loaded_dataframe
+
+environment = load_environment_variables('.streamlit/secrets.toml')
+scope = environment['scopes']['scope']
+WORKBOOK = authenticate(environment, scope, 'NLFB')
 
 
+# conn = st.connection("gsheets", type=GSheetsConnection)
+# df = conn.read(worksheet="Main")
+# df = pl.from_pandas(df)
+
+df = load_data('Main', schema=schemas.main_schema)
 
 
-conn = st.connection("gsheets", type=GSheetsConnection)
-
-
-df = conn.read(worksheet="Main")
-df = pl.from_pandas(df)
 
 # TODO: get from resources page
 meetup_url = "https://www.meetup.com/20-and-30-somethings-book-club-london/"
 
+# resources_data = load_data('Resources', schema=schemas.resources_schema)
+# meetup_url = resources_data[resources_data['Resource'] == 'Meetup Page']
+
 
 def get_number_of_members():
-    
     response = requests.get(meetup_url)
-
     soup = fromstring(response.text)
     element = soup.get_element_by_id("member-count-link")
     text = str(element.text_content())
     return text.split(" · ")[0]
 
-abbr_to_num = {name: num for num, name in enumerate(calendar.month_name) if num}
+month_name_from_num_dict = dict(enumerate(calendar.month_name)).pop(0)
 
-df = df.with_columns(
-    pl.col('Score').cast(pl.Float64),
-    pl.col('Pages').cast(pl.Int64),
-    pl.col('Goodreads score').cast(pl.Float64),
-    pl.col('Year').cast(pl.Int32),
-    pl.col('Month').map_elements(lambda x: abbr_to_num[x]).alias("Month Num"),
+df = (
+    df
+    .with_columns(pl.col('Month').replace_strict(month_name_from_num_dict).alias("Month Num"))
+    .with_columns(pl.date(pl.col('Year'), pl.col('Month Num'), 1).alias("Date"))
+    .filter(~pl.col("Title").is_null())
 )
-
-df = df.with_columns(
-    pl.date(pl.col('Year'), pl.col('Month Num'), 1).alias("Date")
-)
-
-df = df.filter(
-    ~pl.col("Title").is_null())
 
 with st.sidebar:
     st.title("London's Friendly Bookclub")
