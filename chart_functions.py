@@ -13,12 +13,12 @@ def make_bar(input_df, x_col, y_col, colour_col=None):
     return bar
 
 
-def make_scatter(input_df, x_col, y_col, colour_col=None, trend=False):
+def make_scatter(input_df, x_col, y_col, tooltip=None, colour_col=None, trend=False):
 
-    if trend==True:
-        scatter = px.scatter(input_df, x=x_col, y=y_col, trendline="ols")
+    if trend:
+        scatter = px.scatter(input_df, x=x_col, y=y_col, trendline="ols", hover_data=tooltip)
     else:
-        scatter = px.scatter(input_df, x=x_col, y=y_col)
+        scatter = px.scatter(input_df, x=x_col, y=y_col, hover_data=tooltip)
     scatter.update_layout(
         template='plotly_dark',
         plot_bgcolor='rgba(0, 0, 0, 0)',

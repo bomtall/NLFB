@@ -28,7 +28,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-page_columns = st.columns((1.5, 4.5, 2), gap='medium')
+page_columns = st.columns((2, 4.5, 1.5), gap='medium')
 
 def authenticate(connection_values: dict, scope: list, workbook_name: str):
     credentials_file = json.loads(str(connection_values).replace("'", '"').replace('\r\n', '\\r\\n'))
@@ -83,38 +83,6 @@ def get_number_of_members() -> str:
     text = str(element.text_content())
     return text.split(" · ")[0]
 
-
-with st.sidebar:
-    st.title("London's Friendly Bookclub")
-    st.write(f"This is a dashboard presenting some data on books chosen to read, and subsquently discussed and scored by London's Friendly Bookclub which has {get_number_of_members()}")
-    
-    year_list = list(main_df['Year'].unique().sort())
-    multi_select_year = st.multiselect('Select Year(s)', year_list)
-    df_selected_year = main_df.filter(pl.col('Year').is_in(multi_select_year))
-
-    st.link_button(label="Meetup", url=meetup_url)
-
-
-
-
-with page_columns[1]:
-    st.markdown('#### Mean Score & Book Count by Publisher 📚')
-
-    grouped_selected_year = df_selected_year.group_by('Publisher').agg(pl.col("Score").mean(), pl.col("Title").count())
-
-    bar = chart.make_bar_group(grouped_selected_year, 'Publisher', 'Score', 'Title', 'Score', 'Book Count')
-
-    #bar = chart.make_bar(grouped_selected_year, 'Publisher', 'Score')
-    st.plotly_chart(bar, use_container_width=True)
-
-    st.markdown('#### Score vs Number of Pages 📃')
-    scatter = chart.make_scatter(df_selected_year, 'Score', 'Pages', trend=True)
-    st.plotly_chart(scatter, use_container_width=True )
-    
-    st.markdown('#### London Bookclub Score vs Goodreads')
-    scatter2 = chart.make_scatter(df_selected_year, 'Score', 'Goodreads score', trend=True)
-    st.plotly_chart(scatter2, use_container_width=True )
-
 def add_suggestion():
     st.session_state['btn_suggest_disabled'] = True
     st.write("Thank you for your suggestion of " + st.session_state.input_text)
@@ -124,8 +92,61 @@ def add_suggestion():
     st.session_state.input_text = ""
 
 
-with page_columns[0]:
+with st.sidebar:
+    st.title("London's Friendly Bookclub")
+    st.write(f"This is a dashboard presenting some data on books chosen to read, and subsquently discussed and scored by London's Friendly Bookclub which has {get_number_of_members()}")
     
+    year_list = list(main_df['Year'].unique().sort())
+    multi_select_year = st.multiselect('Select Year(s)', year_list)
+    df_selected_year = main_df.filter(pl.col('Year').is_in(multi_select_year))
+
+    st.text_input("Suggest a book for a future meet...", key="input_text")
+    if 'btn_suggest_disabled' not in st.session_state:
+        st.session_state['btn_suggest_disabled'] = False
+    st.button(
+        "Suggest",
+        key="btn_suggest",
+        on_click=add_suggestion,
+        type="secondary",
+        disabled=st.session_state['btn_suggest_disabled'],
+        use_container_width=False
+    )
+
+    st.link_button(label="Meetup", url=meetup_url)
+
+
+with page_columns[1]:
+
+    st.markdown('### Analysis 📉')
+    st.markdown('#### Mean Score & Book Count by Publisher 📚')
+
+    grouped_selected_year = df_selected_year.group_by('Publisher').agg(pl.col("Score").mean(), pl.col("Title").count())
+
+    bar = chart.make_bar_group(grouped_selected_year, 'Publisher', 'Score', 'Title', 'Score', 'Book Count')
+
+    st.plotly_chart(bar, use_container_width=True)
+
+    st.markdown('#### Score vs Number of Pages 📃')
+    scatter = chart.make_scatter(df_selected_year, 'Score', 'Pages', trend=True, tooltip=['Title', 'Author', 'Month', 'Year'])
+    st.plotly_chart(scatter, use_container_width=True )
+    
+    st.markdown('#### London Bookclub Score vs Goodreads')
+    scatter2 = chart.make_scatter(df_selected_year, 'Score', 'Goodreads score', trend=True, tooltip=['Title', 'Author', 'Month', 'Year'])
+    st.plotly_chart(scatter2, use_container_width=True )
+
+
+
+
+with page_columns[2]:
+    st.markdown('#### All-time stats')
+
+    top_scorer = main_df.select(pl.col("Title"), pl.col('Date'), pl.col("Score"), pl.col('Author')).top_k(2, by='Score')
+    st.metric(
+        label = f"**Highest Score**  \nTitle: {top_scorer['Title'][0]}  \nBy: {str(top_scorer['Author'][0])}  \nDate read: {top_scorer['Date'][0].strftime('%d-%m-%Y')}",
+        value=str(top_scorer['Score'][0]),
+        delta=str(round(top_scorer['Score'][0] - top_scorer['Score'][1], 4))
+    )
+
     st.metric(
         label="Total pages read",
         value=prettify(main_df['Pages'].sum()),
@@ -153,19 +174,14 @@ with page_columns[0]:
     #     delta=0
     # )
 
-    st.text_input("Suggest a book for a future meet...", key="input_text")
-    if 'btn_suggest_disabled' not in st.session_state:
-        st.session_state['btn_suggest_disabled'] = False
-    st.button(
-        "Suggest",
-        key="btn_suggest",
-        on_click=add_suggestion,
-        type="secondary",
-        disabled=st.session_state['btn_suggest_disabled'],
-        use_container_width=False
-    )
 
-with page_columns[2]:
+    
+
+
+
+with page_columns[0]:
+
+    st.markdown('### Selected Books')
     st.dataframe(
         df_selected_year.sort("Date", descending=True).select(pl.col("Title"), pl.col('Date'), pl.col("Score")),
         column_config = {
