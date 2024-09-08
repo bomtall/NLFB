@@ -134,9 +134,6 @@ with page_columns[1]:
     scatter2 = chart.make_scatter(df_selected_year, 'Score', 'Goodreads score', trend=True, tooltip=['Title', 'Author', 'Month', 'Year'])
     st.plotly_chart(scatter2, use_container_width=True )
 
-
-
-
 with page_columns[2]:
     st.markdown('#### All-time stats')
 

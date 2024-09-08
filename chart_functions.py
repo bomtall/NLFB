@@ -12,7 +12,6 @@ def make_bar(input_df, x_col, y_col, colour_col=None):
     )
     return bar
 
-
 def make_scatter(input_df, x_col, y_col, tooltip=None, colour_col=None, trend=False):
 
     if trend:
