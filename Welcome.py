@@ -83,13 +83,13 @@ def get_number_of_members() -> str:
     text = str(element.text_content())
     return text.split(" · ")[0]
 
-def add_suggestion():
-    st.session_state['btn_suggest_disabled'] = True
-    st.write("Thank you for your suggestion of " + st.session_state.input_text)
-    sh = WORKBOOK.worksheet('Suggestions') 
-    row = ['', st.session_state.input_text]
-    sh.append_row(row)
-    st.session_state.input_text = ""
+# def add_suggestion():
+#     st.session_state['btn_suggest_disabled'] = True
+#     st.write("Thank you for your suggestion of " + st.session_state.input_text)
+#     sh = WORKBOOK.worksheet('Suggestions') 
+#     row = ['', st.session_state.input_text]
+#     sh.append_row(row)
+#     st.session_state.input_text = ""
 
 
 with st.sidebar:
@@ -100,17 +100,17 @@ with st.sidebar:
     multi_select_year = st.multiselect('Select Year(s)', year_list)
     df_selected_year = main_df.filter(pl.col('Year').is_in(multi_select_year))
 
-    st.text_input("Suggest a book for a future meet...", key="input_text")
-    if 'btn_suggest_disabled' not in st.session_state:
-        st.session_state['btn_suggest_disabled'] = False
-    st.button(
-        "Suggest",
-        key="btn_suggest",
-        on_click=add_suggestion,
-        type="secondary",
-        disabled=st.session_state['btn_suggest_disabled'],
-        use_container_width=False
-    )
+    # st.text_input("Suggest a book for a future meet...", key="input_text")
+    # if 'btn_suggest_disabled' not in st.session_state:
+    #     st.session_state['btn_suggest_disabled'] = False
+    # st.button(
+    #     "Suggest",
+    #     key="btn_suggest",
+    #     on_click=add_suggestion,
+    #     type="secondary",
+    #     disabled=st.session_state['btn_suggest_disabled'],
+    #     use_container_width=False
+    # )
 
     st.link_button(label="Meetup", url=meetup_url)
 
