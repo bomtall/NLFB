@@ -1,5 +1,6 @@
 import toml
 import json
+
 import millify
 import gspread
 import requests
@@ -16,6 +17,7 @@ from google.oauth2.service_account import Credentials
 from oauth2client.service_account import ServiceAccountCredentials
 
 # python files
+import utils
 import schemas
 import chart_functions as chart
 
@@ -30,38 +32,13 @@ st.set_page_config(
 
 page_columns = st.columns((2, 4.5, 1.5), gap='medium')
 
-def authenticate(connection_values: dict, scope: list, workbook_name: str):
-    credentials_file = json.loads(str(connection_values).replace("'", '"').replace('\r\n', '\\r\\n'))
-    credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_file, scopes=scope)
-    client = gspread.authorize(credentials)
-    wb = client.open(workbook_name)
-    return wb
-
-def pad_data(data: list, length: int):
-    padded_data = [
-        [None if x == "" else x for x in row] +
-        [None] * (length - len(row)) for row in data
-    ]
-    # for i in range(len(data)):
-        # data[i] = [None if x == "" else x for x in data[i]]
-        # data[i] = [row + [None] * (length - len(row)) for row in data]
-    return padded_data
-
-def load_data(sheet_name: str, schema: dict) -> pl.DataFrame:
-    sheet = WORKBOOK.worksheet(sheet_name)
-    data = sheet.get()
-    headers = data[0]
-    padded_data = pad_data(data[1:], len(headers))
-    loaded_dataframe = pl.DataFrame(padded_data, schema=schema, orient='row', strict=False)
-    return loaded_dataframe
-
 ENV = toml.load('.streamlit/secrets.toml')
-WORKBOOK = authenticate(
+WORKBOOK = utils.authenticate(
     ENV['connections']['gsheets'],
     ENV['scopes']['scope'], 
     'NLFB'
 )
-main_df = load_data('Main', schema=schemas.main_schema)
+main_df = utils.load_data('Main', schema=schemas.main_schema, workbook=WORKBOOK)
 
 month_num_from_name_dict = {name:num for num, name in enumerate(calendar.month_name) if num}
 
@@ -69,10 +46,12 @@ main_df = (
     main_df
     .with_columns(pl.col('Month').replace_strict(month_num_from_name_dict).alias("Month Num"))
     .with_columns(pl.date(pl.col('Year'), pl.col('Month Num'), 1).alias("Date"))
+    .filter(pl.col("Score") > 0.0)
     .filter(~pl.col("Title").is_null())
+    
 )
 
-resources_data = load_data('Resources', schema=schemas.resources_schema)
+resources_data = utils.load_data('Resources', schema=schemas.resources_schema, workbook=WORKBOOK)
 meetup_url = resources_data.filter(pl.col('Resource') == 'Meetup Page')['URL'][0]
 
 
@@ -113,8 +92,11 @@ with page_columns[1]:
     st.plotly_chart(scatter, use_container_width=True )
     
     st.markdown('#### London Bookclub Score vs Goodreads')
-    scatter2 = chart.make_scatter(df_selected_year, 'Score', 'Goodreads score', trend=True, tooltip=['Title', 'Author', 'Month', 'Year'])
-    st.plotly_chart(scatter2, use_container_width=True )
+    st.markdown('Scores *above* the line indicate Goodreads has scored the book more highly than the bookclub.')
+    scatter2 = chart.make_scatter(df_selected_year, 'Our score conversion', 'Goodreads score', trend=True, tooltip=['Title', 'Author', 'Month', 'Year'])
+    import plotly.graph_objects as go
+    scatter2 = scatter2.add_trace(go.Scatter(x=[0,5], y=[0,5], name="Equal Score", line_shape='linear'))
+    st.plotly_chart(scatter2, use_container_width=True)
 
 with page_columns[2]:
     st.markdown('#### All-time stats')

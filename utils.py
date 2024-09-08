@@ -20,6 +20,7 @@ def authenticate(connection_values: dict, scope: list, workbook_name: str):
     credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_file, scopes=scope)
     client = gspread.authorize(credentials)
     wb = client.open(workbook_name)
+    print(type(wb))
     return wb
 
 def pad_data(data: list, length: int):
@@ -32,8 +33,8 @@ def pad_data(data: list, length: int):
         # data[i] = [row + [None] * (length - len(row)) for row in data]
     return padded_data
 
-def load_data(sheet_name: str, schema: dict, wb: any) -> pl.DataFrame:
-    sheet = wb.worksheet(sheet_name)
+def load_data(sheet_name: str, schema: dict, workbook: gspread.spreadsheet.Spreadsheet) -> pl.DataFrame:
+    sheet = workbook.worksheet(sheet_name)
     data = sheet.get()
     headers = data[0]
     padded_data = pad_data(data[1:], len(headers))
