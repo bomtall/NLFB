@@ -21,7 +21,7 @@ import utils
 import schemas
 import chart_functions as chart
 
-# command to run: streamlit run app.py
+# command to run: streamlit run Welcome.py
 
 st.set_page_config(
     page_title="London's Friendly Bookclub",
@@ -48,33 +48,19 @@ main_df = (
     .with_columns(pl.date(pl.col('Year'), pl.col('Month Num'), 1).alias("Date"))
     .filter(pl.col("Score") > 0.0)
     .filter(~pl.col("Title").is_null())
-    
 )
 
 resources_data = utils.load_data('Resources', schema=schemas.resources_schema, workbook=WORKBOOK)
 meetup_url = resources_data.filter(pl.col('Resource') == 'Meetup Page')['URL'][0]
-
-
-def get_number_of_members() -> str:
-    response = requests.get(meetup_url)
-    soup = fromstring(response.text)
-    element = soup.get_element_by_id("member-count-link")
-    text = str(element.text_content())
-    return text.split(" · ")[0]
-
-
+members = utils.get_number_of_members(meetup_url, "member-count-link")
 
 with st.sidebar:
     st.title("London's Friendly Bookclub")
-    st.write(f"This is a dashboard presenting some data on books chosen to read, and subsquently discussed and scored by London's Friendly Bookclub which has {get_number_of_members()}")
-    
+    st.write(f"This is a dashboard presenting some data on books chosen to read, and subsquently discussed and scored by London's Friendly Bookclub which has {members} members")
     year_list = list(main_df['Year'].unique().sort())
     multi_select_year = st.multiselect('Select Year(s)', year_list)
     df_selected_year = main_df.filter(pl.col('Year').is_in(multi_select_year))
-
-
     st.link_button(label="Meetup", url=meetup_url)
-
 
 with page_columns[1]:
 

@@ -39,3 +39,18 @@ def load_data(sheet_name: str, schema: dict, workbook: gspread.spreadsheet.Sprea
     padded_data = pad_data(data[1:], len(headers))
     loaded_dataframe = pl.DataFrame(padded_data, schema=schema, orient='row', strict=False)
     return loaded_dataframe
+
+def get_number_of_members(url: str, element_id: str) -> int:
+    members = 6000
+    try:
+        text = get_text_from_html_element(url, element_id)
+        members = int(text.split(' ')[0].replace(',', ''))
+    finally:    
+        return members
+
+def get_text_from_html_element(url: str, element_id: str) -> str:
+    response = requests.get(url)
+    soup = fromstring(response.text)
+    element = soup.get_element_by_id(element_id)
+    text = str(element.text_content())
+    return text

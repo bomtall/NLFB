@@ -33,9 +33,18 @@ WORKBOOK = utils.authenticate(
     'NLFB'
 )
 
+def display_resource(resource):
+    info = resources_data.filter(pl.col('Resource') == resource)
+    st.markdown(f'#### {info['Resource'][0]}')
+    st.markdown(info['Description'][0])
+    st.link_button(label=info['Resource'][0], url=info['URL'][0])
+
+
 resources_data = utils.load_data('Resources', schema=schemas.resources_schema, workbook=WORKBOOK)
 meetup_url = resources_data.filter(pl.col('Resource') == 'Meetup Page')['URL'][0]
-
 st.markdown('## Resources')
 
-st.dataframe(resources_data)
+
+for resource in resources_data['Resource']:
+    if resource:
+        display_resource(resource)
