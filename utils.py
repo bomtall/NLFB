@@ -15,15 +15,14 @@ from streamlit_gsheets import GSheetsConnection
 from google.oauth2.service_account import Credentials
 from oauth2client.service_account import ServiceAccountCredentials
 
-def authenticate(connection_values: dict, scope: list, workbook_name: str):
+def authenticate(connection_values: dict, scope: list, workbook_name: str) -> gspread.spreadsheet.Spreadsheet:
     credentials_file = json.loads(str(connection_values).replace("'", '"').replace('\r\n', '\\r\\n'))
     credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_file, scopes=scope)
     client = gspread.authorize(credentials)
     wb = client.open(workbook_name)
-    print(type(wb))
     return wb
 
-def pad_data(data: list, length: int):
+def pad_data(data: list, length: int) -> list:
     padded_data = [
         [None if x == "" else x for x in row] +
         [None] * (length - len(row)) for row in data

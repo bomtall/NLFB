@@ -92,7 +92,7 @@ with page_columns[1]:
     st.plotly_chart(scatter, use_container_width=True )
     
     st.markdown('#### London Bookclub Score vs Goodreads')
-    st.markdown('Scores *above* the line indicate Goodreads has scored the book more highly than the bookclub.')
+    st.markdown('Scores *above* the "equal score" line indicate Goodreads has scored the book more highly than the bookclub.')
     scatter2 = chart.make_scatter(df_selected_year, 'Our score conversion', 'Goodreads score', trend=True, tooltip=['Title', 'Author', 'Month', 'Year'])
     import plotly.graph_objects as go
     scatter2 = scatter2.add_trace(go.Scatter(x=[0,5], y=[0,5], name="Equal Score", line_shape='linear'))
@@ -107,11 +107,11 @@ with page_columns[2]:
         value=str(top_scorer['Score'][0]),
         delta=str(round(top_scorer['Score'][0] - top_scorer['Score'][1], 4))
     )
-
+    
     st.metric(
         label="Total pages read",
         value=prettify(main_df['Pages'].sum()),
-        delta=main_df.filter(pl.col('Date') > (dt.date.today() - dt.timedelta(days=30)))['Pages'].sum(), 
+        delta=main_df.top_k(1, by='Date')['Pages'][0], 
         # delta_color="inverse"
     )
     st.metric(
