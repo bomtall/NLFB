@@ -1,7 +1,7 @@
-import os
-import sys
-import utils
+import NLFB.utils as utils
 import pytest
+
+# command to run: pytest tests
 
 @pytest.mark.parametrize(
         'args,kwargs,expected', 
