@@ -43,6 +43,6 @@ def test_pearsons_error(args, kwargs, expected):
     """  
     Test that a FileNotFoundError is raised when the file does not exist  
     """  
-    with pytest.raises(AssertionError) as e:  
+    with pytest.raises(TypeError) as e:  
         utils.describe_pearsons_r(*args, **kwargs)  
     assert str(e.value) == 'Incorrect type'

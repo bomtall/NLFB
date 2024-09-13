@@ -54,7 +54,9 @@ def get_text_from_html_element(url: str, element_id: str) -> str:
 
 def describe_pearsons_r(value: float or int) -> str:
     message = ""
-    assert type(value) in [float, int], "Incorrect type"
+    print(type(value))
+    if value == None:
+        raise TypeError("Incorrect type")
     match value:
         case -1:
             message = "perfect negative"
