@@ -22,14 +22,11 @@ def authenticate(connection_values: dict, scope: list, workbook_name: str) -> gs
     wb = client.open(workbook_name)
     return wb
 
-def pad_data(data: list, length: int) -> list:
+def pad_data(data: list, length: int) -> list[list]:
     padded_data = [
         [None if x == "" else x for x in row] +
         [None] * (length - len(row)) for row in data
     ]
-    # for i in range(len(data)):
-        # data[i] = [None if x == "" else x for x in data[i]]
-        # data[i] = [row + [None] * (length - len(row)) for row in data]
     return padded_data
 
 def load_data(sheet_name: str, schema: dict, workbook: gspread.spreadsheet.Spreadsheet) -> pl.DataFrame:
@@ -54,3 +51,28 @@ def get_text_from_html_element(url: str, element_id: str) -> str:
     element = soup.get_element_by_id(element_id)
     text = str(element.text_content())
     return text
+
+def describe_pearsons_r(value: float or int) -> str:
+    message = ""
+    assert type(value) in [float, int], "Incorrect type"
+    match value:
+        case -1:
+            message = "perfect negative"
+        case value if -0.8 > value > -1:
+            message = "strong negative"
+        case value if -0.4 > value > -0.8:
+            message = "moderate negative"
+        case value if 0 > value >-0.4:
+            message = "weak negative"
+        case 0:
+            message = "no"
+        case value if 0.4 >= value > 0:
+            message = "weak positive"
+        case value if 0.8 > value > 0.4:
+            message = "moderate positive"
+        case value if 1 > value >= 0.8:
+            message = "strong positive"
+        case 1:
+            message = "perfect positive"
+
+    return message + " correlation" if message else message

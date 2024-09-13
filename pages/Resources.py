@@ -1,3 +1,4 @@
+import sys
 import toml
 import time
 import json
@@ -10,14 +11,16 @@ import pandas as pd
 import polars as pl
 import datetime as dt
 import streamlit as st
+from pathlib import Path
 from millify import prettify
 from lxml.html import fromstring
 from streamlit_gsheets import GSheetsConnection
 from google.oauth2.service_account import Credentials
 from oauth2client.service_account import ServiceAccountCredentials
 
-import utils
-import schemas
+sys.path.insert(0, str(Path(__file__).parent))
+
+from src import utils, schemas
 
 st.set_page_config(
     page_title="Resources",

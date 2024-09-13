@@ -16,7 +16,7 @@ from streamlit_gsheets import GSheetsConnection
 from google.oauth2.service_account import Credentials
 from oauth2client.service_account import ServiceAccountCredentials
 
-import utils
+from src import utils
 
 st.set_page_config(
     page_title="Suggest a book",

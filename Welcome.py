@@ -1,6 +1,7 @@
+import sys
 import toml
 import json
-
+import scipy
 import millify
 import gspread
 import requests
@@ -10,16 +11,18 @@ import pandas as pd
 import polars as pl
 import datetime as dt
 import streamlit as st
+from pathlib import Path
 from millify import prettify
+import plotly.express as px
 from lxml.html import fromstring
+import plotly.graph_objects as go
 from streamlit_gsheets import GSheetsConnection
 from google.oauth2.service_account import Credentials
 from oauth2client.service_account import ServiceAccountCredentials
 
 # python files
-import utils
-import schemas
-import chart_functions as chart
+from src import utils, schemas, chart_functions as chart
+
 
 # command to run: streamlit run Welcome.py
 
@@ -68,20 +71,30 @@ with page_columns[1]:
     st.markdown('#### Mean Score & Book Count by Publisher 📚')
 
     grouped_selected_year = df_selected_year.group_by('Publisher').agg(pl.col("Score").mean(), pl.col("Title").count())
+    grouped_selected_year = grouped_selected_year.sort(by="Score", descending=True)
 
     bar = chart.make_bar_group(grouped_selected_year, 'Publisher', 'Score', 'Title', 'Score', 'Book Count')
 
     st.plotly_chart(bar, use_container_width=True)
 
+    st.markdown("The Pearson correlation coefficient $r$ measures the linear relationship between two datasets. It's value varies between $-1$ and $+1$ with $0$ implying no correlation")
+
     st.markdown('#### Score vs Number of Pages 📃')
     scatter = chart.make_scatter(df_selected_year, 'Score', 'Pages', trend=True, tooltip=['Title', 'Author', 'Month', 'Year'])
-    st.plotly_chart(scatter, use_container_width=True )
+    if not df_selected_year.is_empty():
+        r = round(scipy.stats.pearsonr(df_selected_year['Score'], df_selected_year['Pages'])[0], 3)
+        msg = utils.describe_pearsons_r(r)
+        st.markdown(f'$r = {r}$ {msg}')
+    st.plotly_chart(scatter, use_container_width=True)
     
     st.markdown('#### London Bookclub Score vs Goodreads')
     st.markdown('Scores *above* the "equal score" line indicate Goodreads has scored the book more highly than the bookclub.')
     scatter2 = chart.make_scatter(df_selected_year, 'Our score conversion', 'Goodreads score', trend=True, tooltip=['Title', 'Author', 'Month', 'Year'])
-    import plotly.graph_objects as go
     scatter2 = scatter2.add_trace(go.Scatter(x=[0,5], y=[0,5], name="Equal Score", line_shape='linear'))
+    if not df_selected_year.is_empty():
+        r = round(scipy.stats.pearsonr(df_selected_year['Our score conversion'], df_selected_year['Goodreads score'])[0], 3)
+        msg = utils.describe_pearsons_r(r)
+        st.markdown(f'$r = {r}$ {msg}')
     st.plotly_chart(scatter2, use_container_width=True)
 
 with page_columns[2]:
@@ -122,10 +135,6 @@ with page_columns[2]:
     # )
 
 
-    
-
-
-
 with page_columns[0]:
 
     st.markdown('### Selected Books')
@@ -137,4 +146,17 @@ with page_columns[0]:
         hide_index=True,
         use_container_width=True
     )
+
+    new_main_df = (
+    df_selected_year
+    .with_columns(pl.col("Topics").str.split(", "))
+    .explode("Topics")
+    )
+
+    new_new = new_main_df.group_by([pl.col("Topics")]).agg(pl.col("Title").count()).sort(pl.col("Title"), descending=False)
+
+    topics_bar = px.bar(new_new, y="Topics", x="Title", orientation='h') # use colour?
+    topics_bar.update_layout(yaxis={"dtick":1},margin={"t":100,"b":100},height=900)
+    st.markdown('#### Hot Topics')
+    st.plotly_chart(topics_bar, use_container_width=True)
 
