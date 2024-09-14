@@ -35,3 +35,13 @@ author_schema = {
     'Books since last bookclub pick': str,
     'Book title': str
 }
+
+data_schema = {
+    'column_0': str,
+    'column_1': str,
+    'column_2': str,
+    'column_3': str,
+    'column_4': str,
+    'column_5': str,
+    'column_6': str
+}

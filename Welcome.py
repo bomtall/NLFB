@@ -42,6 +42,7 @@ WORKBOOK = utils.authenticate(
 )
 main_df = utils.load_data('Main', schema=schemas.main_schema, workbook=WORKBOOK)
 author_df = utils.load_data('Authors', schema=schemas.author_schema, workbook=WORKBOOK)
+countries_df = utils.load_data('Data', schema=schemas.data_schema, workbook=WORKBOOK)
 
 month_num_from_name_dict = {name:num for num, name in enumerate(calendar.month_name) if num}
 
@@ -216,9 +217,20 @@ with row3[1]:
 with row3[2]:
     st.markdown('---')
     st.markdown('#### Author Country of Birth')
-    country_group = author_df.group_by('Country of Birth').agg(pl.col("Country of Birth").count().alias('Count'))
-    sorted_country_group = country_group.sort(by="Count", descending=False)
-    birth_pie = px.bar(sorted_country_group, y='Country of Birth', x='Count', color_discrete_sequence=px.colors.qualitative.Pastel2[4:], orientation='h')
-    chart.display_plotly(birth_pie)
+    # country_group = author_df.group_by('Country of Birth').agg(pl.col("Country of Birth").count().alias('Count'))
+    # sorted_country_group = country_group.sort(by="Count", descending=False)
+    # birth_bar = px.bar(sorted_country_group, y='Country of Birth', x='Count', color_discrete_sequence=px.colors.qualitative.Pastel2[4:], orientation='h')
+    # chart.display_plotly(birth_bar)
 
+    map_df = author_df.join(countries_df, left_on='Country of Birth', right_on='column_0', how='left')
+    map_group = map_df.group_by([pl.col('Country of Birth'), pl.col('column_2').alias('Alpha3Code')]).agg(pl.col('Author Name').count().alias('Count'))
+    map_group = map_group.with_columns(
+        pl.col('Count').cast(int)
+    )
 
+    map_fig = px.choropleth(map_group, locations="Alpha3Code",
+                color="Count",
+                hover_name="Country of Birth",
+                color_continuous_scale=px.colors.sequential.Plasma)
+
+    chart.display_plotly(map_fig)
