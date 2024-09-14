@@ -35,7 +35,7 @@ st.set_page_config(
 
 row1 = st.columns((2, 4.5, 1.5), gap='medium')
 row2 = st.columns((2, 4.5, 1.5), gap='medium')
-row3 = st.columns((1))
+row3 = st.columns((1,1))
 
 ENV = toml.load('.streamlit/secrets.toml')
 WORKBOOK = utils.authenticate(
@@ -87,26 +87,28 @@ with row1[1]:
     bar.update_layout(dragmode='pan')
     st.plotly_chart(bar, use_container_width=True)
 
-with row3[0]:
+with row2[1]:
     st.markdown('---')
-    hm_data = unpivot_topics_df.group_by([pl.col("Publisher"), pl.col("Topics")]).agg(pl.col("Title").count().alias("Count")).pivot(index='Publisher', on='Topics').fill_null(0)
+    hm_data = unpivot_topics_df.group_by([pl.col("Publisher"), pl.col("Topics")]).agg(pl.col("Title").count().alias("Count")).pivot(index='Topics', on='Publisher').fill_null(0)
     heatmap = px.imshow(hm_data,
                 labels=dict(x="Topic", y="Publisher", color="Count"),
-                y=hm_data['Publisher'],
+                y=hm_data['Topics'],
                 x=hm_data.columns,
                 # color_continuous_scale='YlOrRd',
                 color_continuous_scale='RdPu',
                 #text_auto=True
                 #height=300
+                height=1000,
+                width=500
                )
-    heatmap.update_xaxes(side="top", title="")
-    heatmap.update_yaxes(side="right", title="")
-    heatmap.update_layout(margin={"t":50,"b":0}, yaxis={"dtick":1},  xaxis={"dtick":1})
+    heatmap.update_xaxes(side="top", title="", automargin=False)
+    heatmap.update_yaxes(side="left", title="", automargin=False)
+    heatmap.update_layout(margin={"t":150,"b":0,"l":0,"r":0}, yaxis={"dtick":1},  xaxis={"dtick":1}, xaxis_tickangle=-45,)
     heatmap.layout.coloraxis.showscale = False
     heatmap.update_layout(dragmode='pan')
     st.markdown('#### Heatmap - Publisher & Topics')
     st.plotly_chart(heatmap, use_container_width=True)
-with row2[1]:
+with row3[0]:
     st.markdown('---')
     st.markdown('#### Score vs Number of Pages 📃')
     scatter = chart.make_scatter(df_selected_year, 'Score', 'Pages', trend=True, tooltip=['Title', 'Author', 'Month', 'Year'])
@@ -121,7 +123,8 @@ with row2[1]:
             'The value of $r$ varies between $-1$ and $+1$ with $0$ implying no correlation',
             unsafe_allow_html=True
         )
-    
+with row3[1]:
+    st.markdown('---')
     st.markdown('#### London Bookclub Score vs Goodreads')
     st.markdown('Scores *above* the "equal score" line indicate Goodreads has scored the book more highly than the bookclub.')
     scatter2 = chart.make_scatter(df_selected_year, 'Our score conversion', 'Goodreads score', trend=True, tooltip=['Title', 'Author', 'Month', 'Year'])
