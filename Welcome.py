@@ -34,7 +34,7 @@ st.set_page_config(
 )
 
 row1 = st.columns((2, 4.5, 1.5), gap='medium')
-row2 = st.columns((2, 4.5, 1.5), gap='medium')
+row2 = st.columns((1,1), gap='medium')
 row3 = st.columns((1,1))
 
 ENV = toml.load('.streamlit/secrets.toml')
@@ -103,12 +103,25 @@ with row2[1]:
                )
     heatmap.update_xaxes(side="top", title="", automargin=False)
     heatmap.update_yaxes(side="left", title="", automargin=False)
-    heatmap.update_layout(margin={"t":150,"b":0,"l":0,"r":0}, yaxis={"dtick":1},  xaxis={"dtick":1}, xaxis_tickangle=-45,)
+    heatmap.update_layout(margin={"t":150,"b":0,"l":50,"r":0}, yaxis={"dtick":1},  xaxis={"dtick":1}, xaxis_tickangle=-45,)
     heatmap.layout.coloraxis.showscale = False
     heatmap.update_layout(dragmode='pan')
     st.markdown('#### Heatmap - Publisher & Topics')
     st.plotly_chart(heatmap, use_container_width=True)
-with row3[0]:
+
+with row2[0]:
+    st.markdown('---')
+    st.markdown('#### London Bookclub Score vs Goodreads')
+    st.markdown('Scores *above* the "equal score" line indicate Goodreads has scored the book more highly than the bookclub.')
+    scatter2 = chart.make_scatter(df_selected_year, 'Our score conversion', 'Goodreads score', trend=True, tooltip=['Title', 'Author', 'Month', 'Year'])
+    scatter2 = scatter2.add_trace(go.Scatter(x=[0,5], y=[0,5], name="Equal Score", line_shape='linear'))
+    scatter2.update_layout(dragmode='pan')
+    if not df_selected_year.is_empty():
+        r = round(scipy.stats.pearsonr(df_selected_year['Our score conversion'], df_selected_year['Goodreads score'])[0], 3)
+        msg = utils.describe_pearsons_r(r)
+        st.markdown(f'$r = {r}$ {msg}')
+    st.plotly_chart(scatter2, use_container_width=True)
+
     st.markdown('---')
     st.markdown('#### Score vs Number of Pages 📃')
     scatter = chart.make_scatter(df_selected_year, 'Score', 'Pages', trend=True, tooltip=['Title', 'Author', 'Month', 'Year'])
@@ -123,18 +136,8 @@ with row3[0]:
             'The value of $r$ varies between $-1$ and $+1$ with $0$ implying no correlation',
             unsafe_allow_html=True
         )
-with row3[1]:
-    st.markdown('---')
-    st.markdown('#### London Bookclub Score vs Goodreads')
-    st.markdown('Scores *above* the "equal score" line indicate Goodreads has scored the book more highly than the bookclub.')
-    scatter2 = chart.make_scatter(df_selected_year, 'Our score conversion', 'Goodreads score', trend=True, tooltip=['Title', 'Author', 'Month', 'Year'])
-    scatter2 = scatter2.add_trace(go.Scatter(x=[0,5], y=[0,5], name="Equal Score", line_shape='linear'))
-    scatter2.update_layout(dragmode='pan')
-    if not df_selected_year.is_empty():
-        r = round(scipy.stats.pearsonr(df_selected_year['Our score conversion'], df_selected_year['Goodreads score'])[0], 3)
-        msg = utils.describe_pearsons_r(r)
-        st.markdown(f'$r = {r}$ {msg}')
-    st.plotly_chart(scatter2, use_container_width=True)
+
+
 
 with row1[2]:
     st.markdown('#### All-time stats')
@@ -188,15 +191,15 @@ with row1[0]:
 
 new_new = unpivot_topics_df.group_by([pl.col("Topics")]).agg(pl.col("Title").count()).sort(pl.col("Title"), descending=False)
 
-with row2[0]:
-    st.markdown('---')
-    topics_bar = px.bar(new_new, y="Topics", x="Title", orientation='h') # use colour?
-    topics_bar.update_layout(yaxis={"dtick":1},margin={"t":10,"b":100},height=900)
-    topics_bar.update_layout(dragmode='pan')
-    st.markdown('#### Hot Topics')
-    st.plotly_chart(topics_bar, use_container_width=True)
+# with row2[0]:
+#     st.markdown('---')
+#     topics_bar = px.bar(new_new, y="Topics", x="Title", orientation='h') # use colour?
+#     topics_bar.update_layout(yaxis={"dtick":1},margin={"t":10,"b":100},height=900)
+#     topics_bar.update_layout(dragmode='pan')
+#     st.markdown('#### Hot Topics')
+#     st.plotly_chart(topics_bar, use_container_width=True)
 
-with row2[2]:
+with row3[0]:
     st.markdown('---')
     st.markdown('#### Author Gender')
     pie = fig = px.pie(df_selected_year, names='Author gender', color_discrete_sequence=px.colors.qualitative.Pastel2)
