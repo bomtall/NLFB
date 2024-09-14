@@ -33,7 +33,9 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-page_columns = st.columns((2, 4.5, 1.5), gap='medium')
+row1 = st.columns((2, 4.5, 1.5), gap='medium')
+row2 = st.columns((2, 4.5, 1.5), gap='medium')
+row3 = st.columns((1))
 
 ENV = toml.load('.streamlit/secrets.toml')
 WORKBOOK = utils.authenticate(
@@ -55,7 +57,9 @@ main_df = (
 
 resources_data = utils.load_data('Resources', schema=schemas.resources_schema, workbook=WORKBOOK)
 meetup_url = resources_data.filter(pl.col('Resource') == 'Meetup Page')['URL'][0]
-members = utils.get_number_of_members(meetup_url, "member-count-link")
+
+text = utils.get_text_from_html_element(meetup_url, "member-count-link")
+members = utils.get_number_of_members(text, 6000)
 
 with st.sidebar:
     st.title("London's Friendly Bookclub")
@@ -65,7 +69,13 @@ with st.sidebar:
     df_selected_year = main_df.filter(pl.col('Year').is_in(multi_select_year))
     st.link_button(label="Meetup", url=meetup_url)
 
-with page_columns[1]:
+unpivot_topics_df = (
+    df_selected_year
+    .with_columns(pl.col("Topics").str.split(", "))
+    .explode("Topics")
+    )
+
+with row1[1]:
 
     st.markdown('### Analysis 📉')
     st.markdown('#### Mean Score & Book Count by Publisher 📚')
@@ -77,15 +87,39 @@ with page_columns[1]:
 
     st.plotly_chart(bar, use_container_width=True)
 
-    st.markdown("The Pearson correlation coefficient $r$ measures the linear relationship between two datasets. It's value varies between $-1$ and $+1$ with $0$ implying no correlation")
-
+with row3[0]:
+    st.markdown('---')
+    hm_data = unpivot_topics_df.group_by([pl.col("Publisher"), pl.col("Topics")]).agg(pl.col("Title").count().alias("Count")).pivot(index='Publisher', on='Topics').fill_null(0)
+    heatmap = px.imshow(hm_data,
+                labels=dict(x="Topic", y="Publisher", color="Count"),
+                y=hm_data['Publisher'],
+                x=hm_data.columns,
+                # color_continuous_scale='YlOrRd',
+                color_continuous_scale='RdPu',
+                #text_auto=True
+                #height=300
+               )
+    heatmap.update_xaxes(side="top", title="")
+    heatmap.update_yaxes(side="right", title="")
+    heatmap.update_layout(margin={"t":50,"b":0}, yaxis={"dtick":1},  xaxis={"dtick":1})
+    heatmap.layout.coloraxis.showscale = False
+    st.markdown('#### Heatmap - Publisher & Topics')
+    st.plotly_chart(heatmap, use_container_width=True)
+with row2[1]:
+    st.markdown('---')
     st.markdown('#### Score vs Number of Pages 📃')
     scatter = chart.make_scatter(df_selected_year, 'Score', 'Pages', trend=True, tooltip=['Title', 'Author', 'Month', 'Year'])
+    st.plotly_chart(scatter, use_container_width=True)
     if not df_selected_year.is_empty():
         r = round(scipy.stats.pearsonr(df_selected_year['Score'], df_selected_year['Pages'])[0], 3)
         msg = utils.describe_pearsons_r(r)
         st.markdown(f'$r = {r}$ {msg}')
-    st.plotly_chart(scatter, use_container_width=True)
+        st.markdown(
+            '<font size=2> ' +
+            'The Pearson correlation coefficient $r$ measures the linear relationship between two datasets.' + '<br>'
+            'The value of $r$ varies between $-1$ and $+1$ with $0$ implying no correlation',
+            unsafe_allow_html=True
+        )
     
     st.markdown('#### London Bookclub Score vs Goodreads')
     st.markdown('Scores *above* the "equal score" line indicate Goodreads has scored the book more highly than the bookclub.')
@@ -97,7 +131,7 @@ with page_columns[1]:
         st.markdown(f'$r = {r}$ {msg}')
     st.plotly_chart(scatter2, use_container_width=True)
 
-with page_columns[2]:
+with row1[2]:
     st.markdown('#### All-time stats')
 
     top_scorer = main_df.select(pl.col("Title"), pl.col('Date'), pl.col("Score"), pl.col('Author')).top_k(2, by='Score')
@@ -135,11 +169,11 @@ with page_columns[2]:
     # )
 
 
-with page_columns[0]:
-
+with row1[0]:
     st.markdown('### Selected Books')
     st.dataframe(
         df_selected_year.sort("Date", descending=True).select(pl.col("Title"), pl.col('Date'), pl.col("Score")),
+        height=525,
         column_config = {
             'Date': st.column_config.DateColumn(format="YYYY-MM")
         },
@@ -147,16 +181,25 @@ with page_columns[0]:
         use_container_width=True
     )
 
-    new_main_df = (
-    df_selected_year
-    .with_columns(pl.col("Topics").str.split(", "))
-    .explode("Topics")
-    )
+new_new = unpivot_topics_df.group_by([pl.col("Topics")]).agg(pl.col("Title").count()).sort(pl.col("Title"), descending=False)
 
-    new_new = new_main_df.group_by([pl.col("Topics")]).agg(pl.col("Title").count()).sort(pl.col("Title"), descending=False)
-
+with row2[0]:
+    st.markdown('---')
     topics_bar = px.bar(new_new, y="Topics", x="Title", orientation='h') # use colour?
-    topics_bar.update_layout(yaxis={"dtick":1},margin={"t":100,"b":100},height=900)
+    topics_bar.update_layout(yaxis={"dtick":1},margin={"t":10,"b":100},height=900)
     st.markdown('#### Hot Topics')
     st.plotly_chart(topics_bar, use_container_width=True)
+
+with row2[2]:
+    st.markdown('---')
+    st.markdown('#### Author Gender')
+    pie = fig = px.pie(df_selected_year, names='Author gender', color_discrete_sequence=px.colors.qualitative.Pastel2)
+    pie.update_layout(margin={"t":0,"b":10}, legend=dict(
+    yanchor="bottom",
+    y=0.8,
+    xanchor="center",
+    x=0.01
+    ))
+    st.plotly_chart(pie, use_container_width=True)
+
 

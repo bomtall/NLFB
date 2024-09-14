@@ -35,7 +35,11 @@ def test_explain_pearsons_r(args, kwargs, expected):
 @pytest.mark.parametrize(
         'args,kwargs,expected', 
         [
-            ([None], dict(), ""),
+            ([None], dict(), "Value argument must be a number"),
+            (['word'], dict(), "Value argument must be a number"),
+            ([], dict(value=None), "Value argument must be a number"),
+            ([], dict(value='word'), "Value argument must be a number"),
+
 
         ]
 )
@@ -45,4 +49,4 @@ def test_pearsons_error(args, kwargs, expected):
     """  
     with pytest.raises(TypeError) as e:  
         utils.describe_pearsons_r(*args, **kwargs)  
-    assert str(e.value) == 'Incorrect type'
+    assert str(e.value) == expected

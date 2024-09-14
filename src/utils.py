@@ -9,6 +9,7 @@ import pandas as pd
 import polars as pl
 import datetime as dt
 import streamlit as st
+from numbers import Number
 from millify import prettify
 from lxml.html import fromstring
 from streamlit_gsheets import GSheetsConnection
@@ -37,34 +38,37 @@ def load_data(sheet_name: str, schema: dict, workbook: gspread.spreadsheet.Sprea
     loaded_dataframe = pl.DataFrame(padded_data, schema=schema, orient='row', strict=False)
     return loaded_dataframe
 
-def get_number_of_members(url: str, element_id: str) -> int:
-    members = 6000
-    try:
-        text = get_text_from_html_element(url, element_id)
-        members = int(text.split(' ')[0].replace(',', ''))
-    finally:    
-        return members
+def get_number_of_members(text: str, default: int) -> int:    
+    if text:
+        try:
+            members = int(text.split(' ')[0].replace(',', ''))
+        except ValueError:
+            members = default
+    return members
 
 def get_text_from_html_element(url: str, element_id: str) -> str:
     response = requests.get(url)
     soup = fromstring(response.text)
-    element = soup.get_element_by_id(element_id)
-    text = str(element.text_content())
+    try:
+        element = soup.get_element_by_id(element_id)
+        text = str(element.text_content())
+    except KeyError:
+        text = ""
     return text
 
-def describe_pearsons_r(value: float or int) -> str:
+def describe_pearsons_r(value: Number) -> str:
+    """Provide a short text description for a given Pearsoons correlation coefficient value"""
     message = ""
-    print(type(value))
-    if value == None:
-        raise TypeError("Incorrect type")
+    if not isinstance(value, Number):
+        raise TypeError("Value argument must be a number")
     match value:
         case -1:
             message = "perfect negative"
-        case value if -0.8 > value > -1:
+        case value if -0.8 >= value > -1:
             message = "strong negative"
         case value if -0.4 > value > -0.8:
             message = "moderate negative"
-        case value if 0 > value >-0.4:
+        case value if 0 > value >= -0.4:
             message = "weak negative"
         case 0:
             message = "no"

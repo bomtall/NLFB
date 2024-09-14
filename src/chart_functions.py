@@ -29,12 +29,12 @@ def make_scatter(input_df, x_col, y_col, tooltip=None, colour_col=None, trend=Fa
 
 def make_bar_group(df, x_col, y_col_1, y_col_2, y1_title, y2_title):
     figure = go.Figure(data=[
-        go.Bar(name='Score', x=df[x_col], y=df[y_col_1], yaxis='y1', offsetgroup=1),
-        go.Bar(name='Book Count', x=df[x_col], y=df[y_col_2], yaxis='y2', offsetgroup=2)
+        go.Bar(name='Score', x=df[x_col], y=df[y_col_1], yaxis='y1', offsetgroup=1, marker=dict(color="#FF4B4B")),
+        go.Bar(name='Book Count', x=df[x_col], y=df[y_col_2], yaxis='y2', offsetgroup=2, marker=dict(color=px.colors.qualitative.Pastel1[4]))
     ],
     layout={
             'yaxis': {'title': y1_title},
             'yaxis2': {'title': y2_title, 'overlaying': 'y', 'side': 'right'}
-        }
+        },
     )
     return figure
