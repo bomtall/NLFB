@@ -84,7 +84,7 @@ with row1[1]:
     grouped_selected_year = grouped_selected_year.sort(by="Score", descending=True)
 
     bar = chart.make_bar_group(grouped_selected_year, 'Publisher', 'Score', 'Title', 'Score', 'Book Count')
-
+    bar.update_layout(dragmode='pan')
     st.plotly_chart(bar, use_container_width=True)
 
 with row3[0]:
@@ -103,6 +103,7 @@ with row3[0]:
     heatmap.update_yaxes(side="right", title="")
     heatmap.update_layout(margin={"t":50,"b":0}, yaxis={"dtick":1},  xaxis={"dtick":1})
     heatmap.layout.coloraxis.showscale = False
+    heatmap.update_layout(dragmode='pan')
     st.markdown('#### Heatmap - Publisher & Topics')
     st.plotly_chart(heatmap, use_container_width=True)
 with row2[1]:
@@ -125,6 +126,7 @@ with row2[1]:
     st.markdown('Scores *above* the "equal score" line indicate Goodreads has scored the book more highly than the bookclub.')
     scatter2 = chart.make_scatter(df_selected_year, 'Our score conversion', 'Goodreads score', trend=True, tooltip=['Title', 'Author', 'Month', 'Year'])
     scatter2 = scatter2.add_trace(go.Scatter(x=[0,5], y=[0,5], name="Equal Score", line_shape='linear'))
+    scatter2.update_layout(dragmode='pan')
     if not df_selected_year.is_empty():
         r = round(scipy.stats.pearsonr(df_selected_year['Our score conversion'], df_selected_year['Goodreads score'])[0], 3)
         msg = utils.describe_pearsons_r(r)
@@ -187,6 +189,7 @@ with row2[0]:
     st.markdown('---')
     topics_bar = px.bar(new_new, y="Topics", x="Title", orientation='h') # use colour?
     topics_bar.update_layout(yaxis={"dtick":1},margin={"t":10,"b":100},height=900)
+    topics_bar.update_layout(dragmode='pan')
     st.markdown('#### Hot Topics')
     st.plotly_chart(topics_bar, use_container_width=True)
 
@@ -200,6 +203,7 @@ with row2[2]:
     xanchor="center",
     x=0.01
     ))
+    pie.update_layout(dragmode='pan')
     st.plotly_chart(pie, use_container_width=True)
 
 
