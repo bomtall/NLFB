@@ -43,7 +43,7 @@ def display_resource(resource):
     st.link_button(label=info['Resource'][0], url=info['URL'][0])
 
 
-resources_data = utils.load_data('Resources', schema=schemas.resources_schema, workbook=WORKBOOK)
+resources_data = utils.load_data('Resources', schema=schemas.get_resources_schema(), workbook=WORKBOOK)
 meetup_url = resources_data.filter(pl.col('Resource') == 'Meetup Page')['URL'][0]
 st.markdown('## Resources')
 

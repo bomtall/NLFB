@@ -40,9 +40,9 @@ WORKBOOK = utils.authenticate(
     ENV['scopes']['scope'], 
     'NLFB'
 )
-main_df = utils.load_data('Main', schema=schemas.main_schema, workbook=WORKBOOK)
-author_df = utils.load_data('Authors', schema=schemas.author_schema, workbook=WORKBOOK)
-countries_df = utils.load_data('Data', schema=schemas.data_schema, workbook=WORKBOOK)
+main_df = utils.load_data('Main', schema=schemas.get_main_schema(), workbook=WORKBOOK)
+author_df = utils.load_data('Authors', schema=schemas.get_author_schema(), workbook=WORKBOOK)
+countries_df = utils.load_data('Data', schema=schemas.get_data_schema(), workbook=WORKBOOK)
 
 month_num_from_name_dict = {name:num for num, name in enumerate(calendar.month_name) if num}
 
@@ -54,7 +54,7 @@ main_df = (
     .filter(~pl.col("Title").is_null())
 )
 
-resources_data = utils.load_data('Resources', schema=schemas.resources_schema, workbook=WORKBOOK)
+resources_data = utils.load_data('Resources', schema=schemas.get_resources_schema(), workbook=WORKBOOK)
 meetup_url = resources_data.filter(pl.col('Resource') == 'Meetup Page')['URL'][0]
 
 text = utils.get_text_from_html_element(meetup_url, "member-count-link")
