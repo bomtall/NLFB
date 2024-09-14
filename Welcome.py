@@ -63,7 +63,7 @@ with st.sidebar:
     st.title("London's Friendly Bookclub")
     st.write(f"This is a dashboard presenting some data on books chosen to read, and subsquently discussed and scored by London's Friendly Bookclub which has {members} members")
     year_list = list(main_df['Year'].unique().sort())
-    multi_select_year = st.multiselect('Select Year(s)', year_list)
+    multi_select_year = st.multiselect('Select Year(s)', year_list, default=year_list)
     df_selected_year = main_df.filter(pl.col('Year').is_in(multi_select_year))
     st.link_button(label="Meetup", url=meetup_url)
 
