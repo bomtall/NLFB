@@ -34,5 +34,4 @@ author_schema = {
     'Country of Birth': str,
     'Books since last bookclub pick': str,
     'Book title': str
-
 }
