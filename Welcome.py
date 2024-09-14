@@ -19,10 +19,7 @@ import plotly.graph_objects as go
 from streamlit_gsheets import GSheetsConnection
 from google.oauth2.service_account import Credentials
 from oauth2client.service_account import ServiceAccountCredentials
-
-# python files
 from src import utils, schemas, chart_functions as chart
-
 
 # command to run: streamlit run Welcome.py
 
@@ -35,7 +32,7 @@ st.set_page_config(
 
 row1 = st.columns((2, 4.5, 1.5), gap='medium')
 row2 = st.columns((1,1), gap='medium')
-row3 = st.columns((1,1))
+row3 = st.columns((0.25,0.25,1), gap='large')
 
 ENV = toml.load('.streamlit/secrets.toml')
 WORKBOOK = utils.authenticate(
@@ -44,6 +41,7 @@ WORKBOOK = utils.authenticate(
     'NLFB'
 )
 main_df = utils.load_data('Main', schema=schemas.main_schema, workbook=WORKBOOK)
+author_df = utils.load_data('Authors', schema=schemas.author_schema, workbook=WORKBOOK)
 
 month_num_from_name_dict = {name:num for num, name in enumerate(calendar.month_name) if num}
 
@@ -84,30 +82,20 @@ with row1[1]:
     grouped_selected_year = grouped_selected_year.sort(by="Score", descending=True)
 
     bar = chart.make_bar_group(grouped_selected_year, 'Publisher', 'Score', 'Title', 'Score', 'Book Count')
-    bar.update_layout(dragmode='pan')
-    st.plotly_chart(bar, use_container_width=True)
+    chart.display_plotly(bar)
 
 with row2[1]:
     st.markdown('---')
-    hm_data = unpivot_topics_df.group_by([pl.col("Publisher"), pl.col("Topics")]).agg(pl.col("Title").count().alias("Count")).pivot(index='Topics', on='Publisher').fill_null(0)
-    heatmap = px.imshow(hm_data,
-                labels=dict(x="Topic", y="Publisher", color="Count"),
-                y=hm_data['Topics'],
-                x=hm_data.columns,
-                # color_continuous_scale='YlOrRd',
-                color_continuous_scale='RdPu',
-                #text_auto=True
-                #height=300
-                height=1000,
-                width=500
-               )
-    heatmap.update_xaxes(side="top", title="", automargin=False)
-    heatmap.update_yaxes(side="left", title="", automargin=False)
-    heatmap.update_layout(margin={"t":150,"b":0,"l":50,"r":0}, yaxis={"dtick":1},  xaxis={"dtick":1}, xaxis_tickangle=-45,)
-    heatmap.layout.coloraxis.showscale = False
-    heatmap.update_layout(dragmode='pan')
+    hm_data = (
+        unpivot_topics_df
+        .group_by([pl.col("Publisher"), pl.col("Topics")])
+        .agg(pl.col("Title").count().alias("Count"))
+        .pivot(index='Topics', on='Publisher')
+        .fill_null(0).sort(by="Topics")
+    )
     st.markdown('#### Heatmap - Publisher & Topics')
-    st.plotly_chart(heatmap, use_container_width=True)
+    chart.display_plotly(chart.make_heatmap(hm_data))
+
 
 with row2[0]:
     st.markdown('---')
@@ -115,17 +103,18 @@ with row2[0]:
     st.markdown('Scores *above* the "equal score" line indicate Goodreads has scored the book more highly than the bookclub.')
     scatter2 = chart.make_scatter(df_selected_year, 'Our score conversion', 'Goodreads score', trend=True, tooltip=['Title', 'Author', 'Month', 'Year'])
     scatter2 = scatter2.add_trace(go.Scatter(x=[0,5], y=[0,5], name="Equal Score", line_shape='linear'))
-    scatter2.update_layout(dragmode='pan')
+
+    chart.display_plotly(scatter2)
     if not df_selected_year.is_empty():
         r = round(scipy.stats.pearsonr(df_selected_year['Our score conversion'], df_selected_year['Goodreads score'])[0], 3)
         msg = utils.describe_pearsons_r(r)
         st.markdown(f'$r = {r}$ {msg}')
-    st.plotly_chart(scatter2, use_container_width=True)
 
     st.markdown('---')
     st.markdown('#### Score vs Number of Pages 📃')
     scatter = chart.make_scatter(df_selected_year, 'Score', 'Pages', trend=True, tooltip=['Title', 'Author', 'Month', 'Year'])
-    st.plotly_chart(scatter, use_container_width=True)
+    chart.display_plotly(scatter)
+
     if not df_selected_year.is_empty():
         r = round(scipy.stats.pearsonr(df_selected_year['Score'], df_selected_year['Pages'])[0], 3)
         msg = utils.describe_pearsons_r(r)
@@ -141,8 +130,8 @@ with row2[0]:
 
 with row1[2]:
     st.markdown('#### All-time stats')
-
     top_scorer = main_df.select(pl.col("Title"), pl.col('Date'), pl.col("Score"), pl.col('Author')).top_k(2, by='Score')
+    
     st.metric(
         label = f"**Highest Score**  \nTitle: {top_scorer['Title'][0]}  \nBy: {str(top_scorer['Author'][0])}  \nDate read: {top_scorer['Date'][0].strftime('%d-%m-%Y')}",
         value=str(top_scorer['Score'][0]),
@@ -209,7 +198,27 @@ with row3[0]:
     xanchor="center",
     x=0.01
     ))
-    pie.update_layout(dragmode='pan')
-    st.plotly_chart(pie, use_container_width=True)
+    chart.display_plotly(pie)
+
+with row3[1]:
+
+    st.markdown('---')
+    st.markdown('#### Debut Novel?')
+    debut_pie = px.pie(df_selected_year, names='Debut?', color_discrete_sequence=px.colors.qualitative.Pastel2[2:])
+    debut_pie.update_layout(margin={"t":0,"b":10}, legend=dict(
+    yanchor="bottom",
+    y=0.8,
+    xanchor="center",
+    x=0.01
+    ))
+    chart.display_plotly(debut_pie)
+
+with row3[2]:
+    st.markdown('---')
+    st.markdown('#### Author Country of Birth')
+    country_group = author_df.group_by('Country of Birth').agg(pl.col("Country of Birth").count().alias('Count'))
+    sorted_country_group = country_group.sort(by="Count", descending=False)
+    birth_pie = px.bar(sorted_country_group, y='Country of Birth', x='Count', color_discrete_sequence=px.colors.qualitative.Pastel2[4:], orientation='h')
+    chart.display_plotly(birth_pie)
 
 

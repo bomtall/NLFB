@@ -25,3 +25,14 @@ resources_schema = {
     'Description': str,
     'URL': str
 }
+
+author_schema = {
+    'Forename': str,
+    'Surname': str,
+    'Author Name': str,
+    'Gender': str,
+    'Country of Birth': str,
+    'Books since last bookclub pick': str,
+    'Book title': str
+
+}
