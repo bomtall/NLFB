@@ -33,6 +33,7 @@ st.set_page_config(
 row1 = st.columns((2, 4.5, 1.5), gap='medium')
 row2 = st.columns((1,1), gap='medium')
 row3 = st.columns((0.25,0.25,1), gap='large')
+row4 = st.columns((1))
 
 ENV = toml.load('.streamlit/secrets.toml')
 WORKBOOK = utils.authenticate(
@@ -214,7 +215,7 @@ with row3[1]:
     ))
     chart.display_plotly(debut_pie)
 
-with row3[2]:
+with row4[0]:
     st.markdown('---')
     st.markdown('#### Author Country of Birth')
     # country_group = author_df.group_by('Country of Birth').agg(pl.col("Country of Birth").count().alias('Count'))
@@ -231,6 +232,7 @@ with row3[2]:
     map_fig = px.choropleth(map_group, locations="Alpha3Code",
                 color="Count",
                 hover_name="Country of Birth",
-                color_continuous_scale=px.colors.sequential.Plasma)
+                color_continuous_scale=px.colors.sequential.Viridis)
+    map_fig.update_layout(margin={"t":0,"b":0})
 
     chart.display_plotly(map_fig)
