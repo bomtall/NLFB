@@ -37,6 +37,8 @@ def get_author_schema() -> dict:
         'Author Name': str,
         'Gender': str,
         'Country of Birth': str,
+        'Year of Birth': str,
+        'Year of death': str,
         'Books since last bookclub pick': str,
         'Book title': str
     }
