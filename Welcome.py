@@ -20,6 +20,8 @@ from streamlit_gsheets import GSheetsConnection
 from google.oauth2.service_account import Credentials
 from oauth2client.service_account import ServiceAccountCredentials
 from src import utils, schemas, chart_functions as chart
+from plotly.subplots import make_subplots
+
 
 # command to run: streamlit run Welcome.py
 
@@ -128,8 +130,6 @@ with row2[0]:
             unsafe_allow_html=True
         )
 
-
-
 with row1[2]:
     st.markdown('#### All-time stats')
     top_scorer = main_df.select(pl.col("Title"), pl.col('Date'), pl.col("Score"), pl.col('Author')).top_k(2, by='Score')
@@ -214,6 +214,15 @@ with row3[1]:
     x=0.01
     ))
     chart.display_plotly(debut_pie)
+
+with row3[2]:
+    st.markdown('---')
+    st.markdown('#### Distributions')
+    histogram_fig = make_subplots(rows=2, cols=1, subplot_titles=("Number of Pages Distribution", "Score Distribution"))
+    histogram_fig.add_trace(go.Histogram(x=df_selected_year['Pages'], name="Pages"), row=1, col=1)
+    histogram_fig.add_trace(go.Histogram(x=df_selected_year['Score'], name="Score"), row=2, col=1)
+
+    chart.display_plotly(histogram_fig)
 
 with row4[0]:
     st.markdown('---')
