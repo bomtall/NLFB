@@ -48,16 +48,10 @@ def main(spreadsheet_id, range):
             print("No data found.")
             return    
 
-         
-
         return values
-
-        
 
     except HttpError as err:
         print(err)
-
-    
 
 if __name__ == "__main__":
     main()
