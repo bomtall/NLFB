@@ -60,7 +60,6 @@ def get_plank_schema() -> dict:
     plank_schema = {
         'Timestamp': str,
         'Email Address': str,
-        'Number of planks': pl.Int64,
         'Total duration of planking today': str,
         'Duration of longest single plank': str,
         'Total number of planks (optional)': pl.Int64,
