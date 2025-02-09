@@ -30,6 +30,10 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+with st.sidebar:
+    st.link_button(label="Plank Form", url="https://docs.google.com/forms/d/e/1FAIpQLSdPNT9_j2-zKvQ7CjZ4WjZwK21oJxCvuZhrJLa_Gek6bIEKXw/viewform?usp=header")
+    
 row_0 = st.columns((1))
 row_1 = st.columns((1,1,1,1), gap='medium')
 row_2 = st.columns((1), gap='medium')
@@ -90,7 +94,9 @@ last_24_h = main_df.filter(pl.col('Timestamp') > (dt.datetime.now() - dt.timedel
 
 with row_0[0]:
     st.title("Plank Challenge")
-
+    st.write("This dashboard shows the progress of the plank challenge aiming to achieve a 5 minute plank")
+    st.link_button(label="Plank Form", url="https://docs.google.com/forms/d/e/1FAIpQLSdPNT9_j2-zKvQ7CjZ4WjZwK21oJxCvuZhrJLa_Gek6bIEKXw/viewform?usp=header")  
+    
 with row_1[0]:
     st.metric(
         f"**Longest single plank:**  \n\n {top_planker["Email Address"].first()} 🏆",
